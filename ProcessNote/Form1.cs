@@ -33,6 +33,7 @@ namespace ProcessNote
         private void Form1_Load(object sender, EventArgs e)
         {
             label1.Hide();
+            label2.Hide();
             button1.Hide();
             textBox1.Hide();
             manageProcesses();
@@ -40,8 +41,11 @@ namespace ProcessNote
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (previousId != null && (!comment.Text.Equals("You can add new comment here") && !comment.Text.Equals("Your comment was saved!")))
+            if (previousId != null && !comment.Text.Equals("You can add new comment here"))
             {
+                string check;
+                comments.TryGetValue(previousId, out check);
+                if (check == null)
                 {
                     var confirmResult = MessageBox.Show("You have an unsaved comment. Press ok if you want to save it!",
                                                         "Confirm please",MessageBoxButtons.OKCancel);
@@ -55,6 +59,7 @@ namespace ProcessNote
             createComment();
             label1.Text = $"Name: {cell}";
             label1.Show();
+            label2.Show();
             button1.Show();
             createProcAttr();
         }
@@ -73,12 +78,12 @@ namespace ProcessNote
             this.Controls.Add(comment);
         }
 
-        private void createProcAttr()
+        private void createProcAttr(Process currentProc = null)
         {
             textBox1.Clear();
             textBox1.Show();
             int index = dataGridView1.SelectedCells[0].RowIndex;
-            Process selectedProc = proc[index];
+            Process selectedProc = (currentProc == null)? proc[index] : currentProc;
             string procTime;
             string memo;
             string vmemo;
@@ -114,24 +119,33 @@ namespace ProcessNote
         {
             if (comment.Text != null || !comment.Text.Equals("You can add new comment here"))
             {
-                var cell = dataGridView1.SelectedCells[0];
-                var row = dataGridView1.Rows[cell.RowIndex];
-                var secondValue = row.Cells[1].Value;
-                comments.Add(secondValue.ToString(), comment.Text);
+                var secondValue = getProcessId();
+                comments.Add(secondValue, comment.Text);
                 previousId = null;
-                comment.Text = "Your comment was saved!";
             }
         }
 
         private string checkCommentValue()
         {
+            previousId = getProcessId();
+            string currentComment;
+            comments.TryGetValue(previousId, out currentComment);
+            return currentComment;
+        }
+
+        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            int id = Int32.Parse(getProcessId().ToString());
+            Process process = Process.GetProcessById(id);
+            createProcAttr(process);
+        }
+
+        private string getProcessId()
+        {
             var cell = dataGridView1.SelectedCells[0];
             var row = dataGridView1.Rows[cell.RowIndex];
             var secondValue = row.Cells[1].Value;
-            previousId = secondValue.ToString();
-            string currentComment;
-            comments.TryGetValue(secondValue.ToString(), out currentComment);
-            return currentComment;
+            return secondValue.ToString();
         }
     }
 }
