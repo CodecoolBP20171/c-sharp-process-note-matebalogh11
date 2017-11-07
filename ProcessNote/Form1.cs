@@ -35,6 +35,7 @@ namespace ProcessNote
             label1.Hide();
             label2.Hide();
             button1.Hide();
+            button2.Hide();
             textBox1.Hide();
             manageProcesses();
         }
@@ -61,6 +62,7 @@ namespace ProcessNote
             label1.Show();
             label2.Show();
             button1.Show();
+            button2.Show();
             createProcAttr();
         }
 
@@ -120,7 +122,14 @@ namespace ProcessNote
             if (comment.Text != null || !comment.Text.Equals("You can add new comment here"))
             {
                 var secondValue = getProcessId();
-                comments.Add(secondValue, comment.Text);
+                string possibleValue;
+                if (comments.TryGetValue(secondValue, out possibleValue))
+                {
+                    comments[secondValue] = comment.Text;
+                } else
+                {
+                    comments.Add(secondValue, comment.Text);
+                }
                 previousId = null;
             }
         }
@@ -135,7 +144,7 @@ namespace ProcessNote
 
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            int id = Int32.Parse(getProcessId().ToString());
+            int id = Int32.Parse(getProcessId());
             Process process = Process.GetProcessById(id);
             createProcAttr(process);
         }
@@ -146,6 +155,28 @@ namespace ProcessNote
             var row = dataGridView1.Rows[cell.RowIndex];
             var secondValue = row.Cells[1].Value;
             return secondValue.ToString();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            int id = Int32.Parse(getProcessId());
+            Process current = Process.GetProcessById(id);
+            ProcessThreadCollection threads = current.Threads;
+
+            Form2 showThreads = new Form2();
+            if (threads.Count > 0)
+            {
+                foreach (ProcessThread th in threads)
+                {
+                    string tId = th.Id.ToString();
+                    tId = tId.PadRight(20);
+                    showThreads.Textbox1.Text += $"{tId}{th.ThreadState}{Environment.NewLine}";
+                }
+            } else
+            {
+                showThreads.Textbox1.Text = "Unkown process threads.";
+            }
+            showThreads.ShowDialog();
         }
     }
 }
